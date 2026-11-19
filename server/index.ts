@@ -77,7 +77,8 @@ ${story.trim()}
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.8,
-      maxTokens: 512,
+      maxTokens: 1024,
+      reasoningEffort: 'none',
     });
 
     const content = completion.choices?.[0]?.message?.content;
