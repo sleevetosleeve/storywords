@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Story Continuer</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+      textarea,
+      input {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        padding: 0.5rem;
+        font: inherit;
+        font-weight: 400;
+        box-sizing: border-box;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        font: inherit;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 4px;
+        background: #4f39fa;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #999;
+        cursor: wait;
+      }
+      #status {
+        min-height: 1.2em;
+        color: #b00020;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Story Continuer</h1>
+
+    <label>
+      The story so far
+      <textarea id="story" rows="8" placeholder="Once upon a time..."></textarea>
+    </label>
+
+    <label>
+      Word to use
+      <input id="wordToUse" type="text" placeholder="e.g. run" />
+    </label>
+
+    <label>
+      Words not to use (one per line)
+      <textarea id="forbiddenWords" rows="4" placeholder="e.g. walk&#10;dog"></textarea>
+    </label>
+
+    <button id="continueBtn" type="button">Continue the story</button>
+
+    <label>
+      Continuation
+      <textarea id="continuation" rows="8"></textarea>
+    </label>
+
+    <p id="status"></p>
+
+    <script>
+      const storyEl = document.getElementById('story');
+      const wordToUseEl = document.getElementById('wordToUse');
+      const forbiddenEl = document.getElementById('forbiddenWords');
+      const continuationEl = document.getElementById('continuation');
+      const statusEl = document.getElementById('status');
+      const btn = document.getElementById('continueBtn');
+
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        statusEl.textContent = 'Asking the AI to continue the story...';
+        try {
+          const res = await fetch('/api/continue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              story: storyEl.value,
+              wordToUse: wordToUseEl.value,
+              forbiddenWords: forbiddenEl.value
+                .split('\n')
+                .map((w) => w.trim())
+                .filter((w) => w !== ''),
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || `Request failed with status ${res.status}`);
+          }
+          continuationEl.value = data.continuation;
+          statusEl.textContent = '';
+        } catch (err) {
+          statusEl.textContent = `Error: ${err.message}`;
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
